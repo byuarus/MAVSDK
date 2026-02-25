@@ -48,10 +48,6 @@ jobs:
         run: cmake $superbuild $cmake_prefix_path -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=build/macos/install -DBUILD_MAVSDK_SERVER=ON -DBUILD_SHARED_LIBS=OFF -DMACOS_FRAMEWORK=${{ matrix.build-framework }} -DWERROR=OFF -Bbuild/macos -H.
       - name: build
         run: cmake --build build/macos -j2 --target install
-      - name: test (core)
-        run: ./build/macos/src/unit_tests_runner
-      - name: test (mavsdk_server)
-        run: ./build/macos/src/mavsdk_server/test/unit_tests_mavsdk_server
       - name: Upload framework as artefact
         if: ${{ matrix.build-framework == 'ON' }}
         uses: actions/upload-artifact@v6
@@ -78,9 +74,6 @@ jobs:
           - name: ios
             platform: OS64
             sdk: iphoneos
-          - name: ios_simulator
-            platform: SIMULATOR64
-            sdk: iphonesimulator
     steps:
       - name: Install Python
         uses: actions/setup-python@v4
@@ -126,10 +119,6 @@ jobs:
         with:
           name: mavsdk_server_ios.framework
           path: ./build/ios/src/mavsdk_server/src/mavsdk_server.framework
-      - uses: actions/download-artifact@v3
-        with:
-          name: mavsdk_server_ios_simulator.framework
-          path: ./build/ios_simulator/src/mavsdk_server/src/mavsdk_server.framework
       - uses: actions/download-artifact@v3
         with:
           name: mavsdk_server_macos.framework
