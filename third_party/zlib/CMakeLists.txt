@@ -1,14 +1,15 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.13)
 
 project(external-zlib)
 include(ExternalProject)
 
 list(APPEND CMAKE_ARGS
-    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+    "-DCMAKE_PREFIX_PATH:PATH=${CMAKE_PREFIX_PATH}"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}"
     "-DCMAKE_TOOLCHAIN_FILE:PATH=${CMAKE_TOOLCHAIN_FILE}"
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    "-DBUILD_SHARED_LIBS=OFF
     )
 
 if(IOS)
@@ -27,8 +28,8 @@ endforeach()
 ExternalProject_add(
     zlib
     GIT_REPOSITORY https://github.com/madler/zlib
-    GIT_TAG v1.2.11
+    GIT_TAG v1.2.13
     PREFIX zlib
-    PATCH_COMMAND git checkout . && git apply ${PROJECT_SOURCE_DIR}/build_shared_libs.patch
+    PATCH_COMMAND git checkout . && git apply ${PROJECT_SOURCE_DIR}/build_shared_libs.patch && git apply ${PROJECT_SOURCE_DIR}/bump_cmake_min_version.patch
     CMAKE_ARGS "${CMAKE_ARGS}"
     )
