@@ -12,7 +12,7 @@ if (SUPERBUILD)
     build_target(tinyxml2)
 
     if(NOT IOS)
-        build_target(zlib)
+        build_target(zlib-ng)
     endif()
 
     build_target(curl)
