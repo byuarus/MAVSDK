@@ -199,6 +199,9 @@ bool CurlWrapper::download_text(const std::string& url, std::string& content)
             curl.get(), CURLOPT_DEBUGFUNCTION, curl_debug_callback, "CURLOPT_DEBUGFUNCTION");
         options_ok &= setopt_with_logging(curl.get(), CURLOPT_DEBUGDATA, &url, "CURLOPT_DEBUGDATA");
 
+        options_ok &= setopt_with_logging(
+            curl.get(), CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4, "CURLOPT_IPRESOLVE");
+
         if (!options_ok) {
             content.clear();
             LogErr() << kSpartaPrefix << "download_text: one or more CURLOPT setup calls failed for URL: " << url;
