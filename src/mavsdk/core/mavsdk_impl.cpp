@@ -60,6 +60,9 @@ MavsdkImpl::~MavsdkImpl()
 
     {
         std::lock_guard<std::recursive_mutex> lock(_systems_mutex);
+        for (auto& pair : _systems) {
+            pair.second->system_impl()->signal_exit();
+        }
         _systems.clear();
     }
 

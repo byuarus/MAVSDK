@@ -366,6 +366,8 @@ public:
 
     double timeout_s() const;
 
+    void signal_exit() { _should_exit = true; }
+
     // Autopilot version data
     void add_capabilities(uint64_t capabilities);
     void set_flight_sw_version(uint32_t flight_sw_version);
