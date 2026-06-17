@@ -98,13 +98,20 @@ jobs:
       - name: install pymavlink dependencies
         run: python3 -m pip install future
       - name: configure
-        run: cmake $superbuild $cmake_prefix_path -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DENABLE_STRICT_TRY_COMPILE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$(pwd)/tools/ios.toolchain.cmake -DPLATFORM=${{ matrix.platform }} -DDEPLOYMENT_TARGET=13.0 -DBUILD_MAVSDK_SERVER=ON -DBUILD_SHARED_LIBS=OFF -DWERROR=OFF -Bbuild/${{ matrix.name }} -H.
+        run: cmake $superbuild $cmake_prefix_path -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DENABLE_STRICT_TRY_COMPILE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=$(pwd)/tools/ios.toolchain.cmake -DPLATFORM=${{ matrix.platform }} -DDEPLOYMENT_TARGET=13.0 -DBUILD_MAVSDK_SERVER=ON -DBUILD_SHARED_LIBS=OFF -DWERROR=OFF -Bbuild/${{ matrix.name }} -H.
       - name: build
         run: cmake --build build/${{ matrix.name }} -j2
+      - name: generate dSYM
+        run: dsymutil build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework/mavsdk_server -o build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework.dSYM
       - uses: actions/upload-artifact@v6
         with:
           name: mavsdk_server_${{ matrix.name }}.framework
           path: ./build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework
+          retention-days: 2
+      - uses: actions/upload-artifact@v6
+        with:
+          name: mavsdk_server_${{ matrix.name }}.framework.dSYM
+          path: ./build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework.dSYM
           retention-days: 2
 
   iOS-XCFramework:
@@ -119,6 +126,10 @@ jobs:
         with:
           name: mavsdk_server_ios.framework
           path: ./build/ios/src/mavsdk_server/src/mavsdk_server.framework
+      - uses: actions/download-artifact@v7
+        with:
+          name: mavsdk_server_ios.framework.dSYM
+          path: ./build/ios/src/mavsdk_server/src/mavsdk_server.framework.dSYM
       - uses: actions/download-artifact@v7
         with:
           name: mavsdk_server_macos.framework
@@ -148,4 +159,3 @@ jobs:
           asset_name: 'mavsdk_server.xcframework.zip.sha256'
           tag: ${{ github.ref }}
           overwrite: true
-
