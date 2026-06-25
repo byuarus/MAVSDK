@@ -30,7 +30,7 @@ jobs:
             sdk: iphonesimulator
             generate-dsym: 'false'
           - name: ios-simulator-x86_64
-            runner: macos-13
+            runner: macos-15-intel
             platform: SIMULATOR64
             sdk: iphonesimulator
             generate-dsym: 'false'
