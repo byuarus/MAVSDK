@@ -15,19 +15,22 @@ on:
 jobs:
   iOS:
     name: ${{ matrix.name }}
-    runs-on: macos-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
           - name: ios-device
+            runner: macos-latest
             platform: OS64
             sdk: iphoneos
             generate-dsym: 'true'
           - name: ios-simulator-arm64
+            runner: macos-latest
             platform: SIMULATORARM64
             sdk: iphonesimulator
             generate-dsym: 'false'
           - name: ios-simulator-x86_64
+            runner: macos-13
             platform: SIMULATOR64
             sdk: iphonesimulator
             generate-dsym: 'false'
