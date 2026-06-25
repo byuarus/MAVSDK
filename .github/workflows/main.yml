@@ -71,9 +71,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: ios
+          - name: ios-device
             platform: OS64
             sdk: iphoneos
+            generate-dsym: 'true'
+          - name: ios-simulator-arm64
+            platform: SIMULATORARM64
+            sdk: iphonesimulator
+            generate-dsym: 'false'
+          - name: ios-simulator-x86_64
+            platform: SIMULATOR64
+            sdk: iphonesimulator
+            generate-dsym: 'false'
     steps:
       - name: Install Python
         uses: actions/setup-python@v4
@@ -102,6 +111,7 @@ jobs:
       - name: build
         run: cmake --build build/${{ matrix.name }} -j2
       - name: generate dSYM
+        if: ${{ matrix.generate-dsym == 'true' }}
         run: dsymutil build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework/mavsdk_server -o build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework.dSYM
       - uses: actions/upload-artifact@v6
         with:
@@ -109,6 +119,7 @@ jobs:
           path: ./build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework
           retention-days: 2
       - uses: actions/upload-artifact@v6
+        if: ${{ matrix.generate-dsym == 'true' }}
         with:
           name: mavsdk_server_${{ matrix.name }}.framework.dSYM
           path: ./build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework.dSYM
@@ -116,7 +127,7 @@ jobs:
 
   iOS-XCFramework:
     name: iOS XCFramework
-    needs: [macOS, iOS]
+    needs: [iOS]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -124,16 +135,20 @@ jobs:
           submodules: recursive
       - uses: actions/download-artifact@v7
         with:
-          name: mavsdk_server_ios.framework
-          path: ./build/ios/src/mavsdk_server/src/mavsdk_server.framework
+          name: mavsdk_server_ios-device.framework
+          path: ./build/ios-device/src/mavsdk_server/src/mavsdk_server.framework
       - uses: actions/download-artifact@v7
         with:
-          name: mavsdk_server_ios.framework.dSYM
-          path: ./build/ios/src/mavsdk_server/src/mavsdk_server.framework.dSYM
+          name: mavsdk_server_ios-device.framework.dSYM
+          path: ./build/ios-device/src/mavsdk_server/src/mavsdk_server.framework.dSYM
       - uses: actions/download-artifact@v7
         with:
-          name: mavsdk_server_macos.framework
-          path: ./build/macos/src/mavsdk_server/src/mavsdk_server.framework
+          name: mavsdk_server_ios-simulator-arm64.framework
+          path: ./build/ios-simulator-arm64/src/mavsdk_server/src/mavsdk_server.framework
+      - uses: actions/download-artifact@v7
+        with:
+          name: mavsdk_server_ios-simulator-x86_64.framework
+          path: ./build/ios-simulator-x86_64/src/mavsdk_server/src/mavsdk_server.framework
       - name: Package
         run: bash ./src/mavsdk_server/tools/package_mavsdk_server_framework.bash
       - uses: actions/upload-artifact@v6

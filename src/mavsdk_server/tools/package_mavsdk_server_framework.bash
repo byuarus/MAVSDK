@@ -4,22 +4,30 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${SCRIPT_DIR}/../../../build"
-IOS_BACKEND_DIR="${BUILD_DIR}/ios/src/mavsdk_server/src"
-MACOS_BACKEND_DIR="${BUILD_DIR}/macos/src/mavsdk_server/src"
+IOS_DEVICE_BACKEND_DIR="${BUILD_DIR}/ios-device/src/mavsdk_server/src"
+IOS_SIMULATOR_ARM64_BACKEND_DIR="${BUILD_DIR}/ios-simulator-arm64/src/mavsdk_server/src"
+IOS_SIMULATOR_X86_64_BACKEND_DIR="${BUILD_DIR}/ios-simulator-x86_64/src/mavsdk_server/src"
+IOS_SIMULATOR_UNIVERSAL_DIR="${BUILD_DIR}/ios-simulator-universal/src/mavsdk_server/src"
 
 if [ -d "${BUILD_DIR}/mavsdk_server.xcframework" ]; then
     echo "${BUILD_DIR}/mavsdk_server.xcframework already exists! Aborting..."
     exit 1
 fi
 
-echo "Fixing Modules in macOS framework"
-ln -sf Versions/Current/Modules "${MACOS_BACKEND_DIR}/mavsdk_server.framework"
+echo "Preparing universal iOS simulator framework..."
+rm -rf "${IOS_SIMULATOR_UNIVERSAL_DIR}"
+mkdir -p "${IOS_SIMULATOR_UNIVERSAL_DIR}"
+cp -R "${IOS_SIMULATOR_ARM64_BACKEND_DIR}/mavsdk_server.framework" "${IOS_SIMULATOR_UNIVERSAL_DIR}/mavsdk_server.framework"
+lipo -create \
+    "${IOS_SIMULATOR_ARM64_BACKEND_DIR}/mavsdk_server.framework/mavsdk_server" \
+    "${IOS_SIMULATOR_X86_64_BACKEND_DIR}/mavsdk_server.framework/mavsdk_server" \
+    -output "${IOS_SIMULATOR_UNIVERSAL_DIR}/mavsdk_server.framework/mavsdk_server"
 
 echo "Creating xcframework..."
 xcodebuild -create-xcframework \
-    -framework "${IOS_BACKEND_DIR}/mavsdk_server.framework" \
-    -debug-symbols "${IOS_BACKEND_DIR}/mavsdk_server.framework.dSYM" \
-    -framework "${MACOS_BACKEND_DIR}/mavsdk_server.framework" \
+    -framework "${IOS_DEVICE_BACKEND_DIR}/mavsdk_server.framework" \
+    -debug-symbols "${IOS_DEVICE_BACKEND_DIR}/mavsdk_server.framework.dSYM" \
+    -framework "${IOS_SIMULATOR_UNIVERSAL_DIR}/mavsdk_server.framework" \
     -output "${BUILD_DIR}/mavsdk_server.xcframework"
 
 find "${BUILD_DIR}/mavsdk_server.xcframework" -path '*/mavsdk_server.framework/mavsdk_server' -exec chmod +x {} +
