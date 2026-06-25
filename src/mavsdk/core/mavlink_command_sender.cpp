@@ -1,6 +1,7 @@
 #include "mavlink_command_sender.h"
 #include "system_impl.h"
 #include <cmath>
+#include <atomic>
 #include <future>
 #include <memory>
 #include <unused.h>
@@ -32,14 +33,15 @@ MavlinkCommandSender::send_command(const MavlinkCommandSender::CommandInt& comma
 {
     // We wrap the async call with a promise and future.
     auto prom = std::make_shared<std::promise<Result>>();
+    auto completed = std::make_shared<std::atomic_bool>(false);
     auto res = prom->get_future();
 
-    queue_command_async(command, [prom](Result result, float progress) {
+    queue_command_async(command, [prom, completed](Result result, float progress) {
         UNUSED(progress);
         // We can only fulfill the promise once in C++11.
         // Therefore, we have to ignore the IN_PROGRESS state and wait
         // for the final result.
-        if (result != Result::InProgress) {
+        if (result != Result::InProgress && !completed->exchange(true)) {
             prom->set_value(result);
         }
     });
@@ -53,14 +55,15 @@ MavlinkCommandSender::send_command(const MavlinkCommandSender::CommandLong& comm
 {
     // We wrap the async call with a promise and future.
     auto prom = std::make_shared<std::promise<Result>>();
+    auto completed = std::make_shared<std::atomic_bool>(false);
     auto res = prom->get_future();
 
-    queue_command_async(command, [prom](Result result, float progress) {
+    queue_command_async(command, [prom, completed](Result result, float progress) {
         UNUSED(progress);
         // We can only fulfill the promise once in C++11.
         // Therefore, we have to ignore the IN_PROGRESS state and wait
         // for the final result.
-        if (result != Result::InProgress) {
+        if (result != Result::InProgress && !completed->exchange(true)) {
             prom->set_value(result);
         }
     });
