@@ -33,7 +33,7 @@ xcodebuild -create-xcframework \
 find "${BUILD_DIR}/mavsdk_server.xcframework" -path '*/mavsdk_server.framework/mavsdk_server' -exec chmod +x {} +
 
 cd "${BUILD_DIR}"
-zip -9 -r mavsdk_server.xcframework.zip mavsdk_server.xcframework
+ditto -c -k --keepParent mavsdk_server.xcframework mavsdk_server.xcframework.zip
 
 shasum -a 256 mavsdk_server.xcframework.zip | awk '{ print $1 }' > mavsdk_server.xcframework.zip.sha256
 
