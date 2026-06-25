@@ -13,6 +13,50 @@ on:
 
 
 jobs:
+  macOS-framework:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - name: macos-framework-arm64
+            runner: macos-latest
+            arch: arm64
+          - name: macos-framework-x86_64
+            runner: macos-15-intel
+            arch: x86_64
+    steps:
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: ./build/${{ matrix.name }}/third_party/install
+          key: ${{ github.job }}-${{ matrix.name }}-${{ hashFiles('./third_party/**') }}
+      - name: disable superbuild on cache hit
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "superbuild=-DSUPERBUILD=OFF" >> $GITHUB_ENV && echo "cmake_prefix_path=-DCMAKE_PREFIX_PATH=$(pwd)/build/${{ matrix.name }}/third_party/install" >> $GITHUB_ENV
+      - name: set SDKROOT value
+        run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+      - name: install pymavlink dependencies
+        run: python3 -m pip install future
+      - name: configure
+        run: cmake $superbuild $cmake_prefix_path -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=build/${{ matrix.name }}/install -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DBUILD_MAVSDK_SERVER=ON -DBUILD_SHARED_LIBS=OFF -DMACOS_FRAMEWORK=ON -DWERROR=OFF -Bbuild/${{ matrix.name }} -H.
+      - name: build
+        run: cmake --build build/${{ matrix.name }} -j2 --target install
+      - uses: actions/upload-artifact@v6
+        with:
+          name: mavsdk_server_${{ matrix.name }}.framework
+          path: ./build/${{ matrix.name }}/src/mavsdk_server/src/mavsdk_server.framework
+          retention-days: 2
+
   iOS:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
@@ -78,7 +122,7 @@ jobs:
 
   iOS-XCFramework:
     name: iOS XCFramework
-    needs: [iOS]
+    needs: [macOS-framework, iOS]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -100,6 +144,14 @@ jobs:
         with:
           name: mavsdk_server_ios-simulator-x86_64.framework
           path: ./build/ios-simulator-x86_64/src/mavsdk_server/src/mavsdk_server.framework
+      - uses: actions/download-artifact@v7
+        with:
+          name: mavsdk_server_macos-framework-arm64.framework
+          path: ./build/macos-framework-arm64/src/mavsdk_server/src/mavsdk_server.framework
+      - uses: actions/download-artifact@v7
+        with:
+          name: mavsdk_server_macos-framework-x86_64.framework
+          path: ./build/macos-framework-x86_64/src/mavsdk_server/src/mavsdk_server.framework
       - name: Package
         run: bash ./src/mavsdk_server/tools/package_mavsdk_server_framework.bash
       - uses: actions/upload-artifact@v6
