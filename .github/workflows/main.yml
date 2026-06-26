@@ -154,24 +154,17 @@ jobs:
           path: ./build/macos-framework-x86_64/src/mavsdk_server/src/mavsdk_server.framework
       - name: Package
         run: bash ./src/mavsdk_server/tools/package_mavsdk_server_framework.bash
-      - name: Verify SwiftPM zip layout
-        run: zipinfo -1 ./build/mavsdk_server.xcframework.zip | grep -q '^mavsdk_server.xcframework/Info.plist$'
       - uses: actions/upload-artifact@v6
         with:
-          name: mavsdk_server.xcframework.zip
-          path: ./build/mavsdk_server.xcframework.zip
-          retention-days: 2
-      - uses: actions/upload-artifact@v6
-        with:
-          name: mavsdk_server.xcframework.zip.sha256
-          path: ./build/mavsdk_server.xcframework.zip.sha256
+          name: mavsdk_server_xcframework_and_sha256
+          path: ./build/mavsdk_server_xcframework_and_sha256
           retention-days: 2
       - name: Publish xcframework
         if: startsWith(github.ref, 'refs/tags/v')
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: 'build/mavsdk_server.xcframework.zip'
+          file: 'build/mavsdk_server_xcframework_and_sha256/mavsdk_server.xcframework.zip'
           asset_name: 'mavsdk_server.xcframework.zip'
           tag: ${{ github.ref }}
           overwrite: true
@@ -180,7 +173,7 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: 'build/mavsdk_server.xcframework.zip.sha256'
+          file: 'build/mavsdk_server_xcframework_and_sha256/mavsdk_server.xcframework.zip.sha256'
           asset_name: 'mavsdk_server.xcframework.zip.sha256'
           tag: ${{ github.ref }}
           overwrite: true

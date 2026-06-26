@@ -47,16 +47,17 @@ xcodebuild -create-xcframework \
 find "${BUILD_DIR}/mavsdk_server.xcframework" -path '*/mavsdk_server.framework/mavsdk_server' -exec chmod +x {} +
 
 cd "${BUILD_DIR}"
+OUTPUT_DIR="${BUILD_DIR}/mavsdk_server_xcframework_and_sha256"
+ZIP_PATH="${OUTPUT_DIR}/mavsdk_server.xcframework.zip"
+SHA256_PATH="${OUTPUT_DIR}/mavsdk_server.xcframework.zip.sha256"
+
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
 
 # Keep the top-level `mavsdk_server.xcframework/` directory in the archive so SwiftPM
 # can map the binary target to the expected artifact layout.
-ditto -c -k --keepParent --norsrc mavsdk_server.xcframework mavsdk_server.xcframework.zip
+ditto -c -k --keepParent --norsrc mavsdk_server.xcframework "${ZIP_PATH}"
 
-if ! zipinfo -1 mavsdk_server.xcframework.zip | grep -q '^mavsdk_server.xcframework/Info.plist$'; then
-    echo "Invalid zip layout: expected mavsdk_server.xcframework as top-level directory."
-    exit 1
-fi
+shasum -a 256 "${ZIP_PATH}" | awk '{ print $1 }' > "${SHA256_PATH}"
 
-shasum -a 256 mavsdk_server.xcframework.zip | awk '{ print $1 }' > mavsdk_server.xcframework.zip.sha256
-
-echo "Success! You will find the xcframework in ${BUILD_DIR}!"
+echo "Success! You will find the packaged xcframework and checksum in ${OUTPUT_DIR}!"
