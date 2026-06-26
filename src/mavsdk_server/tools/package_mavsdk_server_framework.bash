@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${SCRIPT_DIR}/../../../build"
@@ -47,7 +47,15 @@ xcodebuild -create-xcframework \
 find "${BUILD_DIR}/mavsdk_server.xcframework" -path '*/mavsdk_server.framework/mavsdk_server' -exec chmod +x {} +
 
 cd "${BUILD_DIR}"
-zip -9 -r mavsdk_server.xcframework.zip mavsdk_server.xcframework
+
+# Keep the top-level `mavsdk_server.xcframework/` directory in the archive so SwiftPM
+# can map the binary target to the expected artifact layout.
+ditto -c -k --keepParent --norsrc mavsdk_server.xcframework mavsdk_server.xcframework.zip
+
+if ! zipinfo -1 mavsdk_server.xcframework.zip | grep -q '^mavsdk_server.xcframework/Info.plist$'; then
+    echo "Invalid zip layout: expected mavsdk_server.xcframework as top-level directory."
+    exit 1
+fi
 
 shasum -a 256 mavsdk_server.xcframework.zip | awk '{ print $1 }' > mavsdk_server.xcframework.zip.sha256
 

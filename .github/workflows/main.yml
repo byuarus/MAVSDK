@@ -154,6 +154,8 @@ jobs:
           path: ./build/macos-framework-x86_64/src/mavsdk_server/src/mavsdk_server.framework
       - name: Package
         run: bash ./src/mavsdk_server/tools/package_mavsdk_server_framework.bash
+      - name: Verify SwiftPM zip layout
+        run: zipinfo -1 ./build/mavsdk_server.xcframework.zip | grep -q '^mavsdk_server.xcframework/Info.plist$'
       - uses: actions/upload-artifact@v6
         with:
           name: mavsdk_server.xcframework
